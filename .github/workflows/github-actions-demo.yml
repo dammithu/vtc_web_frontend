@@ -4,53 +4,80 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build Vite app
-      run: npm run build
+      - name: Build Vite app
+        run: npm run build
 
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v0.1.9
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_KEY }}
-        port: 22
-        script: |
-          cd /home/ubuntu/vtc-frontnew/vtc_web_frontend
-          
-          # Backup current build
-          if [ -d dist ]; then
-            mv dist dist_backup_$(date +%Y%m%d%H%M%S)
-          fi
-          
-          # Remove old build and copy new build
-          rm -rf dist
-          mkdir -p dist
-          rsync -avz --delete $GITHUB_WORKSPACE/dist/ ./dist/
-          
-          # Install serve globally if missing
-          if ! command -v serve &> /dev/null; then
-            npm install -g serve
-          fi
-          
-          # Restart frontend with PM2
-          pm2 stop moodlefront02 || true
-          pm2 start serve --name "moodlefront02" -- -s /home/ubuntu/vtc-frontnew/vtc_web_frontend/dist -l 5173
-          pm2 save
-          pm2 status
+      - name: Prepare deploy directories on EC2
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          port: 22
+          script: |
+            APP_DIR="/home/ubuntu/vtc-frontnew/vtc_web_frontend"
+            STAGING_DIR="/home/ubuntu/vtc-frontnew/vtc_web_frontend_staging"
+
+            mkdir -p "$APP_DIR" "$STAGING_DIR"
+            rm -rf "$STAGING_DIR"/*
+
+      - name: Upload dist/ to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          port: 22
+          source: "dist/**"
+          target: "/home/ubuntu/vtc-frontnew/vtc_web_frontend_staging"
+          strip_components: 1
+
+      - name: Activate build + restart PM2
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          port: 22
+          script: |
+            APP_DIR="/home/ubuntu/vtc-frontnew/vtc_web_frontend"
+            STAGING_DIR="/home/ubuntu/vtc-frontnew/vtc_web_frontend_staging"
+
+            cd "$APP_DIR"
+
+            # Backup current build
+            if [ -d dist ]; then
+              mv dist "dist_backup_$(date +%Y%m%d%H%M%S)"
+            fi
+
+            mkdir -p dist
+            rsync -a --delete "$STAGING_DIR"/ ./dist/
+
+            # Install serve globally if missing
+            if ! command -v serve &> /dev/null; then
+              npm install -g serve
+            fi
+
+            # Restart frontend with PM2
+            pm2 restart moodlefront02 || pm2 start serve --name "moodlefront02" -- -s "$APP_DIR/dist" -l 5173
+            pm2 save
+            pm2 status
