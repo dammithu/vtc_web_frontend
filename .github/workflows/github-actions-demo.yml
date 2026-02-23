@@ -1,4 +1,4 @@
-name: Deploy React Vite App to EC2
+name: Vite React CI/CD
 
 on:
   push:
@@ -10,54 +10,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      # 2️⃣ Setup Node 22 for build
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
 
-      # 3️⃣ Install dependencies
-      - name: Install Dependencies
-        run: npm install
+    - name: Install dependencies
+      run: npm install
 
-      # 4️⃣ Build Vite project
-      - name: Build App
-        run: npm run build
+    - name: Build Vite app
+      run: npm run build
 
-      # 5️⃣ Verify build files
-      - name: List dist files
-        run: ls -R dist
-
-      # 6️⃣ Upload build to EC2
-      - name: Copy Files to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "dist/**"          # copy all files recursively
-          target: "/home/ubuntu/vtc-frontnew/vtc_web_frontend"
-
-      # 7️⃣ Restart PM2 app with NVM
-      - name: Restart PM2 App
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            echo "Load NVM"
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-            nvm use 22
-
-            # Restart PM2 or start if missing
-            pm2 restart vtc-front || pm2 start $(which serve) --name vtc-front -- -s /home/ubuntu/vtc-frontnew/vtc_web_frontend -l 5175
-
-            pm2 save
-            pm2 status
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.9
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_KEY }}
+        port: 22
+        script: |
+          cd /home/ubuntu/vtc-frontnew/vtc_web_frontend
+          
+          # Backup current build
+          if [ -d dist ]; then
+            mv dist dist_backup_$(date +%Y%m%d%H%M%S)
+          fi
+          
+          # Remove old build and copy new build
+          rm -rf dist
+          mkdir -p dist
+          rsync -avz --delete $GITHUB_WORKSPACE/dist/ ./dist/
+          
+          # Install serve globally if missing
+          if ! command -v serve &> /dev/null; then
+            npm install -g serve
+          fi
+          
+          # Restart frontend with PM2
+          pm2 stop moodlefront02 || true
+          pm2 start serve --name "moodlefront02" -- -s /home/ubuntu/vtc-frontnew/vtc_web_frontend/dist -l 5173
+          pm2 save
+          pm2 status
