@@ -10,21 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout repo
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node for build (GitHub runner)
+      # 2️⃣ Setup Node (for build inside GitHub runner)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 18
 
-      # 3️⃣ Install dependencies
+      # 3️⃣ Install packages
       - name: Install Dependencies
         run: npm install
 
-      # 4️⃣ Build Vite app
+      # 4️⃣ Build Vite project
       - name: Build App
         run: npm run build
 
@@ -39,7 +39,7 @@ jobs:
           target: "/home/ubuntu/vtc-frontnew/vtc_web_frontend"
           strip_components: 1
 
-      # 6️⃣ Reload PM2 using NVM (IMPORTANT)
+      # 6️⃣ Restart PM2 using NVM (THIS IS THE MISSING PART)
       - name: Restart PM2 App
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -47,17 +47,14 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "Loading NVM..."
+            echo "Load NVM"
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
             nvm use 18
 
-            echo "Restarting PM2 App (ID:8)"
+            echo "Restarting PM2 app id 8"
             pm2 restart 8
 
-            echo "Saving PM2 state"
             pm2 save
-
-            echo "PM2 Status:"
             pm2 status
