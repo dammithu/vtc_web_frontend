@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom blue themes */
+:root {
+  --sidebar-bg: #f0f9ff;
+  --sidebar-border: #bae6fd;
+  --navbar-bg: #f0f9ff;
+  --navbar-border: #bae6fd;
+  --body-bg: #f8fbff;
+}
+
+body {
+  background-color: var(--body-bg) !important;
+}
+
+/* Light theme blue overrides */
+.bg-white {
+  background-color: #f0f9ff !important; /* Blue-50 */
+}
+
+.bg-gray-50 {
+  background-color: #e0f2fe !important; /* Blue-100 */
+}
+
+.bg-gray-100 {
+  background-color: #bae6fd !important; /* Blue-200 */
+}
+
+.border-gray-100 {
+  border-color: #bae6fd !important; /* Blue-200 */
+}
+
+.border-gray-200 {
+  border-color: #7dd3fc !important; /* Blue-300 */
+}
+
+.border-gray-300 {
+  border-color: #38bdf8 !important; /* Blue-400 */
+}
+
+.text-gray-600 {
+  color: #0c4a6e !important; /* Blue-900 */
+}
+
+.text-gray-700 {
+  color: #075985 !important; /* Blue-800 */
+}
+
+.text-gray-800 {
+  color: #0c4a6e !important; /* Blue-900 */
+}
+
+.text-gray-500 {
+  color: #0369a1 !important; /* Blue-700 */
+}
+
+.text-gray-900 {
+  color: #0c4a6e !important; /* Blue-900 */
+}
+
+.text-blue-600 {
+  color: #0284c7 !important; /* Blue-600 */
+}
+
+.text-blue-500 {
+  color: #0ea5e9 !important; /* Blue-500 */
+}
+
+/* Hover states for light theme */
+.hover\:bg-gray-50:hover {
+  background-color: #e0f2fe !important; /* Blue-100 */
+}
+
+.hover\:bg-gray-100:hover {
+  background-color: #bae6fd !important; /* Blue-200 */
+}
+
+.hover\:bg-blue-50:hover {
+  background-color: #f0f9ff !important; /* Blue-50 */
+}
+
+.hover\:bg-blue-100:hover {
+  background-color: #e0f2fe !important; /* Blue-100 */
+}
+
+.hover\:text-blue-600:hover {
+  color: #0284c7 !important; /* Blue-600 */
+}
+
+/* Placeholder colors */
+.placeholder-gray-400::placeholder {
+  color: #38bdf8 !important; /* Blue-400 */
+}
+
+/* Button backgrounds */
+.bg-blue-100 {
+  background-color: #e0f2fe !important; /* Blue-100 */
+}
+
+.bg-blue-500 {
+  background-color: #0ea5e9 !important; /* Blue-500 */
+}
+
+.bg-blue-600 {
+  background-color: #0284c7 !important; /* Blue-600 */
+}
+
+.bg-purple-100 {
+  background-color: #ede9fe !important; /* Purple-100 */
+}
+
+.bg-green-100 {
+  background-color: #dcfce7 !important; /* Green-100 */
+}
+
+.bg-yellow-100 {
+  background-color: #fef9c3 !important; /* Yellow-100 */
+}
+
+.bg-red-100 {
+  background-color: #fee2e2 !important; /* Red-100 */
+}
+
+/* Custom blue dark theme styles */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: #0f172a !important; /* Gray-950 */
+}
+
+/* Custom blue theme overrides */
+.dark .dark\:bg-gray-900 {
+  background-color: #0c4a6e !important; /* Blue-900 */
+}
+
+.dark .dark\:border-blue-800 {
+  border-color: #075985 !important; /* Blue-800 */
+}
+
+.dark .dark\:bg-blue-900 {
+  background-color: #0c4a6e !important; /* Blue-900 */
+}
+
+.dark .dark\:border-blue-800 {
+  border-color: #075985 !important; /* Blue-800 */
+}
+
+.dark .dark\:hover\:bg-blue-800:hover {
+  background-color: #075985 !important; /* Blue-800 */
+}
+
+.dark .dark\:text-blue-100 {
+  color: #e0f2fe !important; /* Blue-50 */
+}
+
+.dark .dark\:text-blue-200 {
+  color: #bae6fd !important; /* Blue-200 */
+}
+
+.dark .dark\:text-blue-400 {
+  color: #38bdf8 !important; /* Blue-400 */
+}
+
+.dark .dark\:bg-blue-900\/20 {
+  background-color: rgba(12, 74, 110, 0.2) !important;
+}
+
+.dark .dark\:placeholder-blue-400::placeholder {
+  color: #38bdf8 !important; /* Blue-400 */
+}
+
+/* Text colors for dark mode */
+.dark .dark\:text-gray-200 {
+  color: #e0f2fe !important; /* Blue-50 */
+}
+
+.dark .dark\:text-gray-300 {
+  color: #bae6fd !important; /* Blue-200 */
+}
+
+.dark .dark\:text-gray-400 {
+  color: #7dd3fc !important; /* Blue-300 */
+}
+
+.dark .dark\:text-gray-500 {
+  color: #38bdf8 !important; /* Blue-400 */
+}
+
+/* Background colors for dark mode */
+.dark .dark\:bg-gray-800 {
+  background-color: #075985 !important; /* Blue-800 */
+}
+
+.dark .dark\:bg-gray-700 {
+  background-color: #0369a1 !important; /* Blue-700 */
+}
+
+.dark .dark\:hover\:bg-gray-700:hover {
+  background-color: #0284c7 !important; /* Blue-600 */
+}
+
+.dark .dark\:hover\:bg-gray-800:hover {
+  background-color: #0369a1 !important; /* Blue-700 */
+}
+
+/* Light blue gradient backgrounds */
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+.from-blue-50 {
+  --tw-gradient-from: #f0f9ff;
+  --tw-gradient-to: rgb(240 249 255 / 0);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.to-purple-50 {
+  --tw-gradient-to: #faf5ff;
+}
+
+.border-blue-100 {
+  border-color: #e0f2fe;
+}
+
+/* Transparent backgrounds */
+.bg-blue-500\/20 {
+  background-color: rgba(14, 165, 233, 0.2);
+}
+
+.bg-red-500\/10 {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.bg-yellow-500\/10 {
+  background-color: rgba(245, 158, 11, 0.1);
+}
