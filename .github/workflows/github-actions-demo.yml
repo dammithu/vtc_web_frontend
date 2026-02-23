@@ -49,4 +49,4 @@ jobs:
           port: ${{ secrets.EC2_PORT }}
           script: |
             cd /home/ubuntu/vtc-frontnew/vtc_web_frontend
-            pm2 reload 7
+            pm2 reload 8
