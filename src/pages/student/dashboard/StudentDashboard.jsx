@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, 
   Calendar, 
   CheckCircle, 
   Bell, 
   TrendingUp,
-  Users,
   FileText,
   Clock,
-  Download,
   ChevronRight,
   X,
   ChevronLeft,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Loader
 } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 
@@ -21,7 +20,37 @@ function StudentDashboard() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  
+  const [studentName, setStudentName] = useState('');
+  const [loadingStudent, setLoadingStudent] = useState(true);
+
+  // Fetch logged-in student name
+  useEffect(() => {
+    const studentId = localStorage.getItem('studentId');
+    if (!studentId) {
+      setLoadingStudent(false);
+      return;
+    }
+
+    const fetchStudent = async () => {
+      try {
+        const res = await fetch(`http://3.109.1.245:9999/api/student/getStudentById/${studentId}`);
+        const data = await res.json();
+        if (data.status && data.result?.length > 0) {
+          // Extract first name for a friendly greeting
+          const fullName = data.result[0].full_name || '';
+          const firstName = fullName.split(' ')[0];
+          setStudentName(firstName || fullName);
+        }
+      } catch (err) {
+        console.error('Failed to fetch student info:', err);
+      } finally {
+        setLoadingStudent(false);
+      }
+    };
+
+    fetchStudent();
+  }, []);
+
   // Mock data
   const courses = [
     { id: 1, name: 'Mathematics', progress: 75, color: 'bg-blue-500', lessons: 12, teacher: 'Dr. Smith' },
@@ -66,37 +95,28 @@ function StudentDashboard() {
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDayOfWeek = firstDay.getDay();
-    
     return { daysInMonth, startingDayOfWeek };
   };
 
-  const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
-  };
+  const formatDate = (date) => date.toISOString().split('T')[0];
 
   const getEventsForDate = (date) => {
     const dateStr = formatDate(date);
     return calendarEvents.filter(event => event.date === dateStr);
   };
 
-  const isSameDay = (date1, date2) => {
-    return formatDate(date1) === formatDate(date2);
-  };
+  const isSameDay = (date1, date2) => formatDate(date1) === formatDate(date2);
 
-  const previousMonth = () => {
+  const previousMonth = () =>
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
-  };
 
-  const nextMonth = () => {
+  const nextMonth = () =>
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
-  };
 
-  const monthNames = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  const monthNames = ["January","February","March","April","May","June",
+    "July","August","September","October","November","December"];
 
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
+  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
   return (
     <div className={`min-h-full ${isDarkMode ? 'dark:text-white' : 'text-blue-900'}`}>
@@ -104,7 +124,19 @@ function StudentDashboard() {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Welcome back, Alex!</h1>
+            {/* ✅ Dynamic student name — shows loader while fetching */}
+            {loadingStudent ? (
+              <div className="flex items-center gap-2 mb-1">
+                <Loader className="w-4 h-4 animate-spin text-blue-500" />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-blue-500'}`}>
+                  Loading...
+                </span>
+              </div>
+            ) : (
+              <h1 className="text-2xl sm:text-3xl font-bold">
+                Welcome back, {studentName || 'Student'}!
+              </h1>
+            )}
             <p className={`text-sm sm:text-base mt-1 ${isDarkMode ? 'text-gray-300' : 'text-blue-700'}`}>
               Here's your learning progress for today
             </p>
@@ -139,10 +171,7 @@ function StudentDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className={`
-          rounded-xl p-5
-          ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}
-        `}>
+        <div className={`rounded-xl p-5 ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
           <div className="flex items-center">
             <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
               <BookOpen className="w-6 h-6 text-blue-500" />
@@ -152,15 +181,10 @@ function StudentDashboard() {
               <p className="text-2xl font-bold mt-1">8</p>
             </div>
           </div>
-          <div className={`mt-3 text-xs ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-            +2 this month
-          </div>
+          <div className={`mt-3 text-xs ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>+2 this month</div>
         </div>
 
-        <div className={`
-          rounded-xl p-5
-          ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}
-        `}>
+        <div className={`rounded-xl p-5 ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
           <div className="flex items-center">
             <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
               <TrendingUp className="w-6 h-6 text-purple-500" />
@@ -170,15 +194,10 @@ function StudentDashboard() {
               <p className="text-2xl font-bold mt-1">78%</p>
             </div>
           </div>
-          <div className={`mt-3 text-xs ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-            ↑ 5% from last week
-          </div>
+          <div className={`mt-3 text-xs ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>↑ 5% from last week</div>
         </div>
 
-        <div className={`
-          rounded-xl p-5
-          ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}
-        `}>
+        <div className={`rounded-xl p-5 ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
           <div className="flex items-center">
             <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-yellow-900/30' : 'bg-yellow-100'}`}>
               <Calendar className="w-6 h-6 text-yellow-500" />
@@ -188,15 +207,10 @@ function StudentDashboard() {
               <p className="text-2xl font-bold mt-1">5</p>
             </div>
           </div>
-          <div className={`mt-3 text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            Next: Tomorrow 10 AM
-          </div>
+          <div className={`mt-3 text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Next: Tomorrow 10 AM</div>
         </div>
 
-        <div className={`
-          rounded-xl p-5
-          ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}
-        `}>
+        <div className={`rounded-xl p-5 ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
           <div className="flex items-center">
             <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
               <CheckCircle className="w-6 h-6 text-green-500" />
@@ -206,27 +220,19 @@ function StudentDashboard() {
               <p className="text-2xl font-bold mt-1">3</p>
             </div>
           </div>
-          <div className={`mt-3 text-xs ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-            Next exam in 5 days
-          </div>
+          <div className={`mt-3 text-xs ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>Next exam in 5 days</div>
         </div>
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - 2/3 width */}
+        {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Course Progress */}
-          <div className={`
-            rounded-xl p-6
-            ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}
-          `}>
+          <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Course Progress</h2>
-              <button className={`
-                text-sm font-medium flex items-center gap-1
-                ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}
-              `}>
+              <button className={`text-sm font-medium flex items-center gap-1 ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}>
                 View All <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -243,10 +249,7 @@ function StudentDashboard() {
                     <span className="font-semibold">{course.progress}%</span>
                   </div>
                   <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-blue-200'} rounded-full h-2.5`}>
-                    <div
-                      className={`h-2.5 rounded-full ${course.color}`}
-                      style={{ width: `${course.progress}%` }}
-                    ></div>
+                    <div className={`h-2.5 rounded-full ${course.color}`} style={{ width: `${course.progress}%` }}></div>
                   </div>
                 </div>
               ))}
@@ -254,10 +257,7 @@ function StudentDashboard() {
           </div>
 
           {/* Upcoming Classes & Exams */}
-          <div className={`
-            rounded-xl p-6
-            ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}
-          `}>
+          <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Upcoming Classes & Exams</h2>
               <div className="flex items-center gap-2">
@@ -269,42 +269,34 @@ function StudentDashboard() {
               {upcomingAssignments.map((assignment) => (
                 <div
                   key={assignment.id}
-                  className={`
-                    flex items-center justify-between p-4 rounded-lg
+                  className={`flex items-center justify-between p-4 rounded-lg
                     ${isDarkMode 
                       ? 'bg-gray-800/30 hover:bg-gray-800/50 border border-gray-700' 
                       : 'hover:bg-blue-100 border border-blue-200'
-                    }
-                  `}
+                    }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`
-                      p-2 rounded-lg
+                    <div className={`p-2 rounded-lg
                       ${assignment.priority === 'high' 
                         ? 'bg-red-500/10 text-red-500' 
                         : assignment.priority === 'medium'
                         ? 'bg-yellow-500/10 text-yellow-500'
                         : 'bg-blue-500/10 text-blue-500'
-                      }
-                    `}>
+                      }`}>
                       <FileText className="w-4 h-4" />
                     </div>
                     <div>
                       <h3 className="font-medium">{assignment.title}</h3>
-                      <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>
-                        {assignment.course}
-                      </p>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>{assignment.course}</p>
                     </div>
                   </div>
-                  <span className={`
-                    px-3 py-1 text-sm font-medium rounded-full
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full
                     ${assignment.priority === 'high' 
                       ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' 
                       : assignment.priority === 'medium'
                       ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                       : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                    }
-                  `}>
+                    }`}>
                     Due {assignment.dueDate}
                   </span>
                 </div>
@@ -313,13 +305,10 @@ function StudentDashboard() {
           </div>
         </div>
 
-        {/* Right Column - 1/3 width */}
+        {/* Right Column */}
         <div className="space-y-6">
           {/* Latest Announcements */}
-          <div className={`
-            rounded-xl p-6
-            ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}
-          `}>
+          <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Latest Announcements</h2>
               <div className="relative">
@@ -335,15 +324,13 @@ function StudentDashboard() {
                   style={{ borderColor: isDarkMode ? '#374151' : '#bae6fd' }}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`
-                      p-2 rounded-lg mt-1
+                    <div className={`p-2 rounded-lg mt-1
                       ${announcement.type === 'important' 
                         ? 'bg-red-500/10 text-red-500' 
                         : announcement.type === 'notice'
                         ? 'bg-yellow-500/10 text-yellow-500'
                         : 'bg-blue-500/10 text-blue-500'
-                      }
-                    `}>
+                      }`}>
                       {announcement.type === 'important' ? '!' : announcement.type === 'notice' ? 'i' : '📢'}
                     </div>
                     <div>
@@ -360,10 +347,7 @@ function StudentDashboard() {
           </div>
 
           {/* Recent Activity */}
-          <div className={`
-            rounded-xl p-6
-            ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}
-          `}>
+          <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
             <h2 className="text-xl font-bold mb-6">Recent Activity</h2>
             <div className="space-y-4">
               {recentActivities.map((activity) => (
@@ -371,34 +355,25 @@ function StudentDashboard() {
                   key={activity.id}
                   className={`flex items-center gap-3 p-3 rounded-lg ${isDarkMode ? 'bg-gray-800/30' : 'bg-blue-100'}`}
                 >
-                  <div className={`
-                    w-8 h-8 rounded-full flex items-center justify-center
-                    ${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-200'}
-                  `}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-200'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-sm">{activity.action}</p>
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>
-                      {activity.course}
-                    </p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>{activity.course}</p>
                   </div>
-                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>
-                    {activity.time}
-                  </span>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>{activity.time}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className={`
-            rounded-xl p-6
+          {/* Weekly Overview */}
+          <div className={`rounded-xl p-6
             ${isDarkMode 
               ? 'bg-gradient-to-br from-blue-900/30 to-purple-900/30 border border-blue-800/30' 
               : 'bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200'
-            }
-          `}>
+            }`}>
             <h2 className="text-xl font-bold mb-4">Weekly Overview</h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
@@ -427,15 +402,11 @@ function StudentDashboard() {
       {/* Calendar Modal */}
       {showCalendar && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className={`
-            w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden
-            ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-blue-200'}
-          `}>
+          <div className={`w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden
+            ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-blue-200'}`}>
             {/* Calendar Header */}
-            <div className={`
-              flex items-center justify-between p-6 border-b
-              ${isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-blue-200 bg-blue-50'}
-            `}>
+            <div className={`flex items-center justify-between p-6 border-b
+              ${isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-blue-200 bg-blue-50'}`}>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
                   <Calendar className="w-6 h-6 text-blue-500" />
@@ -449,13 +420,11 @@ function StudentDashboard() {
               </div>
               <button
                 onClick={() => setShowCalendar(false)}
-                className={`
-                  p-2 rounded-lg transition-colors
+                className={`p-2 rounded-lg transition-colors
                   ${isDarkMode 
                     ? 'hover:bg-gray-700 text-gray-400 hover:text-white' 
                     : 'hover:bg-blue-100 text-blue-600 hover:text-blue-700'
-                  }
-                `}
+                  }`}
               >
                 <X className="w-6 h-6" />
               </button>
@@ -466,17 +435,11 @@ function StudentDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Calendar Grid */}
                 <div className="lg:col-span-2">
-                  {/* Month Navigation */}
                   <div className="flex items-center justify-between mb-6">
                     <button
                       onClick={previousMonth}
-                      className={`
-                        p-2 rounded-lg transition-colors
-                        ${isDarkMode 
-                          ? 'hover:bg-gray-700 text-gray-400' 
-                          : 'hover:bg-blue-100 text-blue-600'
-                        }
-                      `}
+                      className={`p-2 rounded-lg transition-colors
+                        ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-blue-100 text-blue-600'}`}
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
@@ -485,47 +448,30 @@ function StudentDashboard() {
                     </h3>
                     <button
                       onClick={nextMonth}
-                      className={`
-                        p-2 rounded-lg transition-colors
-                        ${isDarkMode 
-                          ? 'hover:bg-gray-700 text-gray-400' 
-                          : 'hover:bg-blue-100 text-blue-600'
-                        }
-                      `}
+                      className={`p-2 rounded-lg transition-colors
+                        ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-blue-100 text-blue-600'}`}
                     >
                       <ChevronRightIcon className="w-5 h-5" />
                     </button>
                   </div>
 
-                  {/* Day Names */}
                   <div className="grid grid-cols-7 gap-2 mb-2">
                     {dayNames.map(day => (
-                      <div
-                        key={day}
-                        className={`
-                          text-center text-sm font-semibold py-2
-                          ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}
-                        `}
-                      >
+                      <div key={day} className={`text-center text-sm font-semibold py-2 ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>
                         {day}
                       </div>
                     ))}
                   </div>
 
-                  {/* Calendar Days */}
                   <div className="grid grid-cols-7 gap-2">
                     {(() => {
                       const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
                       const days = [];
 
-                      // Empty cells for days before month starts
                       for (let i = 0; i < startingDayOfWeek; i++) {
-                        days.push(
-                          <div key={`empty-${i}`} className="aspect-square p-2"></div>
-                        );
+                        days.push(<div key={`empty-${i}`} className="aspect-square p-2"></div>);
                       }
 
-                      // Days of the month
                       for (let day = 1; day <= daysInMonth; day++) {
                         const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
                         const events = getEventsForDate(date);
@@ -536,39 +482,20 @@ function StudentDashboard() {
                           <button
                             key={day}
                             onClick={() => setSelectedDate(date)}
-                            className={`
-                              aspect-square p-2 rounded-lg text-sm font-medium
-                              transition-all relative
-                              ${isToday 
-                                ? isDarkMode 
-                                  ? 'ring-2 ring-blue-500' 
-                                  : 'ring-2 ring-blue-400'
-                                : ''
-                              }
+                            className={`aspect-square p-2 rounded-lg text-sm font-medium transition-all relative
+                              ${isToday ? isDarkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-400' : ''}
                               ${isSelected
-                                ? isDarkMode
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-blue-500 text-white'
-                                : isDarkMode
-                                  ? 'hover:bg-gray-700 text-gray-300'
-                                  : 'hover:bg-blue-50 text-blue-900'
-                              }
-                            `}
+                                ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
+                                : isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-blue-50 text-blue-900'
+                              }`}
                           >
                             <div>{day}</div>
                             {events.length > 0 && (
                               <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-1">
                                 {events.slice(0, 3).map((event, idx) => (
-                                  <div
-                                    key={idx}
-                                    className={`w-1 h-1 rounded-full ${
-                                      event.type === 'exam' 
-                                        ? 'bg-red-500' 
-                                        : event.type === 'class'
-                                        ? 'bg-green-500'
-                                        : 'bg-yellow-500'
-                                    }`}
-                                  ></div>
+                                  <div key={idx} className={`w-1 h-1 rounded-full ${
+                                    event.type === 'exam' ? 'bg-red-500' : event.type === 'class' ? 'bg-green-500' : 'bg-yellow-500'
+                                  }`}></div>
                                 ))}
                               </div>
                             )}
@@ -580,107 +507,58 @@ function StudentDashboard() {
                     })()}
                   </div>
 
-                  {/* Legend */}
                   <div className="flex items-center gap-4 mt-6 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                      <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>
-                        Exam
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                      <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>
-                        Class
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                      <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>
-                        Assignment
-                      </span>
-                    </div>
+                    {[['bg-red-500','Exam'],['bg-green-500','Class'],['bg-yellow-500','Assignment']].map(([color, label]) => (
+                      <div key={label} className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${color}`}></div>
+                        <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>{label}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 {/* Events for Selected Date */}
                 <div className="lg:col-span-1">
-                  <div className={`
-                    rounded-xl p-4 h-full
-                    ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}
-                  `}>
+                  <div className={`rounded-xl p-4 h-full ${isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
                     <h3 className="font-bold mb-4">
-                      {selectedDate.toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
+                      {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </h3>
-                    
                     {(() => {
                       const events = getEventsForDate(selectedDate);
-                      
                       if (events.length === 0) {
                         return (
-                          <div className={`
-                            text-center py-8
-                            ${isDarkMode ? 'text-gray-500' : 'text-blue-400'}
-                          `}>
+                          <div className={`text-center py-8 ${isDarkMode ? 'text-gray-500' : 'text-blue-400'}`}>
                             <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
                             <p className="text-sm">No events scheduled</p>
                           </div>
                         );
                       }
-
                       return (
                         <div className="space-y-3">
                           {events.map((event, idx) => (
-                            <div
-                              key={idx}
-                              className={`
-                                p-3 rounded-lg border
-                                ${event.type === 'exam'
-                                  ? isDarkMode
-                                    ? 'bg-red-900/20 border-red-500/30'
-                                    : 'bg-red-50 border-red-200'
-                                  : event.type === 'class'
-                                    ? isDarkMode
-                                      ? 'bg-green-900/20 border-green-500/30'
-                                      : 'bg-green-50 border-green-200'
-                                    : isDarkMode
-                                      ? 'bg-yellow-900/20 border-yellow-500/30'
-                                      : 'bg-yellow-50 border-yellow-200'
-                                }
-                              `}
-                            >
+                            <div key={idx} className={`p-3 rounded-lg border
+                              ${event.type === 'exam'
+                                ? isDarkMode ? 'bg-red-900/20 border-red-500/30' : 'bg-red-50 border-red-200'
+                                : event.type === 'class'
+                                  ? isDarkMode ? 'bg-green-900/20 border-green-500/30' : 'bg-green-50 border-green-200'
+                                  : isDarkMode ? 'bg-yellow-900/20 border-yellow-500/30' : 'bg-yellow-50 border-yellow-200'
+                              }`}>
                               <div className="flex items-start gap-2">
-                                <div className={`
-                                  w-2 h-2 rounded-full mt-2
-                                  ${event.type === 'exam' 
-                                    ? 'bg-red-500' 
-                                    : event.type === 'class'
-                                    ? 'bg-green-500'
-                                    : 'bg-yellow-500'
-                                  }
-                                `}></div>
+                                <div className={`w-2 h-2 rounded-full mt-2
+                                  ${event.type === 'exam' ? 'bg-red-500' : event.type === 'class' ? 'bg-green-500' : 'bg-yellow-500'}`}>
+                                </div>
                                 <div className="flex-1">
                                   <p className="font-semibold text-sm">{event.title}</p>
-                                  <p className={`
-                                    text-xs mt-1
-                                    ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}
-                                  `}>
-                                    <Clock className="inline w-3 h-3 mr-1" />
-                                    {event.time}
+                                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>
+                                    <Clock className="inline w-3 h-3 mr-1" />{event.time}
                                   </p>
-                                  <span className={`
-                                    inline-block mt-2 px-2 py-1 rounded text-xs font-medium
+                                  <span className={`inline-block mt-2 px-2 py-1 rounded text-xs font-medium
                                     ${event.type === 'exam'
                                       ? 'bg-red-500/20 text-red-600 dark:text-red-400'
                                       : event.type === 'class'
                                         ? 'bg-green-500/20 text-green-600 dark:text-green-400'
                                         : 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400'
-                                    }
-                                  `}>
+                                    }`}>
                                     {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
                                   </span>
                                 </div>

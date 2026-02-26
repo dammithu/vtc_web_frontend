@@ -6,11 +6,11 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 
-function EditStudentProfile() {
+function EditLecturerProfile() {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
 
-  const [student, setStudent] = useState(null);
+  const [lecturer, setLecturer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -28,38 +28,40 @@ function EditStudentProfile() {
     phone: '',
     address: '',
     dob: '',
+    nic: '',
   });
 
   const [originalEmail, setOriginalEmail] = useState('');
 
-  const studentId = localStorage.getItem('studentId');
+  const lecturerId = localStorage.getItem('lecturerId');
 
   useEffect(() => {
-    if (!studentId) {
-      setError('Student ID not found.');
+    if (!lecturerId) {
+      setError('Lecturer ID not found.');
       setLoading(false);
       return;
     }
 
-    const fetchStudent = async () => {
+    const fetchLecturer = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://3.109.1.245:9999/api/student/getStudentById/${studentId}`);
+        const res = await fetch(`http://3.109.1.245:9999/api/lecture/getLectureById/${lecturerId}`);
         const data = await res.json();
         if (data.status && data.result?.length > 0) {
-          const s = data.result[0];
-          setStudent(s);
-          const emailVal = s.email || '';
+          const l = data.result[0];
+          setLecturer(l);
+          const emailVal = l.email || '';
           setOriginalEmail(emailVal);
           setForm({
-            full_name: s.full_name || '',
+            full_name: l.full_name || '',
             email: emailVal,
-            phone: s.phone || '',
-            address: s.address || '',
-            dob: s.dob ? s.dob.split('T')[0] : '',
+            phone: l.phone || '',
+            address: l.address || '',
+            dob: l.dob ? l.dob.split('T')[0] : '',
+            nic: l.nic || '',
           });
         } else {
-          setError('Student not found.');
+          setError('Lecturer not found.');
         }
       } catch {
         setError('Failed to load profile. Please try again.');
@@ -68,8 +70,8 @@ function EditStudentProfile() {
       }
     };
 
-    fetchStudent();
-  }, [studentId]);
+    fetchLecturer();
+  }, [lecturerId]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -85,7 +87,7 @@ function EditStudentProfile() {
     try {
       const formData = new FormData();
       formData.append('image', imageFile);
-      const res = await fetch(`http://3.109.1.245:9999/api/student/updateImageById/${studentId}`, {
+      const res = await fetch(`http://3.109.1.245:9999/api/lecture/updateImageById/${lecturerId}`, {
         method: 'PUT',
         body: formData,
       });
@@ -109,11 +111,11 @@ function EditStudentProfile() {
     setError(null);
     setSuccessMsg(null);
     try {
-      const res = await fetch(`http://3.109.1.245:9999/api/user/updateEmailByStudentId`, {
+      const res = await fetch(`http://3.109.1.245:9999/api/user/updateEmailByLectureId/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: parseInt(studentId),
+          id: parseInt(lecturerId),
           newEmail: form.email,
         }),
       });
@@ -124,7 +126,6 @@ function EditStudentProfile() {
         setEmailChanged(false);
       } else {
         setError(data.message || 'Email update failed. Please try again.');
-        // Revert email on failure
         setForm((prev) => ({ ...prev, email: originalEmail }));
         setEmailChanged(false);
       }
@@ -152,14 +153,14 @@ function EditStudentProfile() {
     setSuccessMsg(null);
 
     try {
-      // If email has changed, update email first via separate endpoint
+      // Update email first if changed
       if (emailChanged) {
         setUpdatingEmail(true);
-        const emailRes = await fetch(`http://3.109.1.245:9999/api/user/updateEmailByStudentId`, {
+        const emailRes = await fetch(`http://3.109.1.245:9999/api/user/updateEmailByLectureId/`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id: parseInt(studentId),
+            id: parseInt(lecturerId),
             newEmail: form.email,
           }),
         });
@@ -175,8 +176,8 @@ function EditStudentProfile() {
         setEmailChanged(false);
       }
 
-      // Update other profile fields (excluding email — handled above)
-      const res = await fetch(`http://3.109.1.245:9999/api/student/updateStudentById/${studentId}`, {
+      // Update other profile fields (role_id, reg_number, mode kept from original)
+      const res = await fetch(`http://3.109.1.245:9999/api/lecture/updateLectureById/${lecturerId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -184,13 +185,16 @@ function EditStudentProfile() {
           phone: form.phone,
           address: form.address,
           dob: form.dob,
-          role_id: student?.role_id ?? 2,
+          nic: form.nic,
+          mode: lecturer?.mode ?? 'online',
+          reg_number: lecturer?.reg_number ?? '',
+          role_id: lecturer?.role_id ?? 3,
         }),
       });
       const data = await res.json();
       if (data.status) {
         setSuccessMsg('Profile updated successfully!');
-        setTimeout(() => navigate('/studentprofile'), 1500);
+        setTimeout(() => navigate('/lecturerprofile'), 1500);
       } else {
         setError(data.message || 'Update failed. Please try again.');
       }
@@ -217,7 +221,7 @@ function EditStudentProfile() {
     );
   }
 
-  if (error && !student) {
+  if (error && !lecturer) {
     return (
       <div className="min-h-full flex items-center justify-center">
         <p className="text-sm text-red-500">{error}</p>
@@ -236,7 +240,7 @@ function EditStudentProfile() {
           </p>
         </div>
         <button
-          onClick={() => navigate('/studentprofile')}
+          onClick={() => navigate('/lecturerprofile')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all
             ${isDarkMode
               ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
@@ -268,14 +272,14 @@ function EditStudentProfile() {
             <div className="w-20 h-20 rounded-xl overflow-hidden">
               {imagePreview ? (
                 <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-              ) : student?.imageURL ? (
+              ) : lecturer?.imageURL ? (
                 <img
-                  src={student.imageURL}
-                  alt={student.full_name}
+                  src={lecturer.imageURL}
+                  alt={lecturer.full_name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name)}&background=3b82f6&color=fff&size=80`;
+                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(lecturer.full_name)}&background=3b82f6&color=fff&size=80`;
                   }}
                 />
               ) : (
@@ -345,7 +349,7 @@ function EditStudentProfile() {
               />
             </div>
 
-            {/* Email - uses separate API endpoint */}
+            {/* Email */}
             <div className="flex flex-col gap-1.5">
               <label className={`flex items-center gap-2 text-xs font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 <Mail className="w-3.5 h-3.5 text-blue-500" /> Email
@@ -412,6 +416,21 @@ function EditStudentProfile() {
               />
             </div>
 
+            {/* NIC */}
+            <div className="flex flex-col gap-1.5">
+              <label className={`flex items-center gap-2 text-xs font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <User className="w-3.5 h-3.5 text-blue-500" /> NIC
+              </label>
+              <input
+                type="text"
+                name="nic"
+                value={form.nic}
+                onChange={handleChange}
+                placeholder="Enter NIC number"
+                className={inputBase}
+              />
+            </div>
+
             {/* Address - full width */}
             <div className="flex flex-col gap-1.5 sm:col-span-2">
               <label className={`flex items-center gap-2 text-xs font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -453,4 +472,4 @@ function EditStudentProfile() {
   );
 }
 
-export default EditStudentProfile;
+export default EditLecturerProfile;
