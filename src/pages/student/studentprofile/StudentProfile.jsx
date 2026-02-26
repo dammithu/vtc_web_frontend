@@ -127,7 +127,7 @@ function StudentProfile() {
             )}
           </div>
           <div>
-            <h2 className="text-xl font-bold capitalize">{student.full_name}</h2>
+            <h2 className="text-xl font-bold">{student.full_name}</h2>
             <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>{student.email}</p>
             <span className={`
               inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full text-xs font-medium
@@ -152,7 +152,7 @@ function StudentProfile() {
                 </div>
                 <div>
                   <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>{field.label}</p>
-                  <p className="text-sm font-semibold mt-0.5 capitalize">{field.value}</p>
+                  <p className="text-sm font-semibold mt-0.5">{field.value}</p>
                 </div>
               </div>
             );
