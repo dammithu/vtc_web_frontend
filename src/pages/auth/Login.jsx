@@ -55,18 +55,21 @@ function Login() {
 
       if (response.status && response.response_code === 200) {
         const { userDetails } = response.result;
-        const token = response.token; // token is at response root, not inside result
+        const token = response.token;
 
         // Determine actual user role from API response
         let userRole = null;
         let userRolePosition = null;
+        let roleSpecificId = null; // 👈 student or lecturer record ID
 
         if (userDetails.students && userDetails.students.length > 0) {
           userRole = 'Student';
           userRolePosition = userDetails.students[0].role.position;
+          roleSpecificId = userDetails.students[0].id; // 👈 student table ID
         } else if (userDetails.lectures && userDetails.lectures.length > 0) {
           userRole = 'Lecturer';
           userRolePosition = userDetails.lectures[0].role.position;
+          roleSpecificId = userDetails.lectures[0].id; // 👈 lecturer table ID
         }
 
         // Role mismatch checks
@@ -124,11 +127,18 @@ function Login() {
 
         // Store user data in localStorage
         localStorage.setItem('token', token);
-        localStorage.setItem('userId', userDetails.id);
+        localStorage.setItem('userId', userDetails.id);           // user table ID (2 or 3)
         localStorage.setItem('userRole', userRole);
         localStorage.setItem('userRolePosition', userRolePosition);
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userEmail', userDetails.email);
+
+        // 👇 Store the role-specific record ID
+        if (userRole === 'Student') {
+          localStorage.setItem('studentId', roleSpecificId);
+        } else if (userRole === 'Lecturer') {
+          localStorage.setItem('lecturerId', roleSpecificId);
+        }
 
         // Show success alert then navigate
         Swal.fire({

@@ -83,7 +83,7 @@ function Sidebar() {
     { icon: Calendar, label: 'Attendance', path: '/student/attendance' },
     { icon: Award, label: 'Results', path: '/student/results' },
     { icon: MessageSquare, label: 'Messages', path: '/student/messages' },
-    { icon: User, label: 'Profile', path: '/student/profile' }
+    { icon: User, label: 'Profile', path: '/studentprofile' }
   ]
 
   // Lecturer Menu Items with navigation paths
