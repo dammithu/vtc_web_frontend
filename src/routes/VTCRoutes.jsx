@@ -17,6 +17,14 @@ import StudentMessages from '../pages/student/messages/StudentMessages'
 //lecturer
 import LecturerDashboard from "../pages/lecturer/dashboard/LecturerDashboard"
 import LecturerProfile from "../pages/lecturer/lecturerprofile/LecturerProfile"
+import EditLecturerProfile from '../pages/lecturer/lecturerprofile/EditLecturerProfile'
+import LecturerCourses from '../pages/lecturer/courses/LecturerCourses'
+import MyStudents from '../pages/lecturer/mystudents/MyStudents'
+import LecturerAssessments from '../pages/lecturer/assessments/LecturerAssessments'
+import LecturerAttendance from '../pages/lecturer/attendance/LecturerAttendance'
+import CourseMaterials from '../pages/lecturer/coursematerials/CourseMaterials'
+import LecturerAnalytics from '../pages/lecturer/lectureranalytics/LecturerAnalytics'
+import LecturerMessages from '../pages/lecturer/messages/LecturerMessages'
 
 import Settings from '../pages/settings/Settings'
 import ContactUs from '../pages/contactus/ContactUs'
@@ -60,6 +68,14 @@ function VTCRoutes() {
           {/* Lecturer Role Routes */}
           <Route path="/lecturerdashboard" element={<LecturerDashboard />} />
           <Route path="/lecturerprofile" element={<LecturerProfile />} />
+          <Route path="/editlecturerprofile" element={<EditLecturerProfile />} />
+          <Route path="/lecturer/courses" element={<LecturerCourses />} />
+          <Route path="/lecturer/students" element={<MyStudents />} />
+          <Route path="/lecturer/assessments" element={<LecturerAssessments />} />
+          <Route path="/lecturer/attendance" element={<LecturerAttendance />} />
+          <Route path="/lecturer/materials" element={<CourseMaterials />} />
+          <Route path="/lecturer/analytics" element={<LecturerAnalytics />} />
+          <Route path="/lecturer/messages" element={<LecturerMessages />} />
 
           <Route path="/settings" element={<Settings />} />
           <Route path="/contactus" element={<ContactUs />} />
