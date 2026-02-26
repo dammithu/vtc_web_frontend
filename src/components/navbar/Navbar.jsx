@@ -50,7 +50,8 @@ function Navbar({ onMenuClick }) {
         email: localStorage.getItem('userEmail') || 'user@vtc.ac.lk',
         role: localStorage.getItem('userRole') || 'Student',
         displayRole: 'User',
-        userType: null
+        userType: null,
+        imageURL: null,
       }
     }
 
@@ -58,6 +59,7 @@ function Navbar({ onMenuClick }) {
     let role = 'Student'
     let displayRole = 'Student'
     let userType = null
+    let imageURL = null
 
     // Check if user is a lecturer
     if (userDetails.lectures && userDetails.lectures.length > 0) {
@@ -66,6 +68,7 @@ function Navbar({ onMenuClick }) {
       role = lectureData.role.position
       displayRole = 'Lecturer'
       userType = 'lecturer'
+      imageURL = lectureData.imageURL || null
     }
     // Check if user is a student
     else if (userDetails.students && userDetails.students.length > 0) {
@@ -74,6 +77,7 @@ function Navbar({ onMenuClick }) {
       role = studentData.role.position
       displayRole = 'Student'
       userType = 'student'
+      imageURL = studentData.imageURL || null
     }
     // Check if user is an admin
     else if (userDetails.admins && userDetails.admins.length > 0) {
@@ -82,18 +86,22 @@ function Navbar({ onMenuClick }) {
       role = adminData.role?.position || 'admin'
       displayRole = 'Admin'
       userType = 'admin'
+      imageURL = adminData.imageURL || null
     }
 
-    return {
-      name: name,
-      email: userDetails.email,
-      role: role,
-      displayRole: displayRole,
-      userType: userType
-    }
+    return { name, email: userDetails.email, role, displayRole, userType, imageURL }
   }
 
   const userInfo = getUserInfo()
+
+  // Build full image URL (handle relative paths from server)
+  const getImageSrc = (imageURL, name) => {
+    if (!imageURL) return null
+    if (imageURL.startsWith('http')) return imageURL
+    return `http://3.109.1.245:9999${imageURL}`
+  }
+
+  const profileImageSrc = getImageSrc(userInfo.imageURL, userInfo.name)
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -113,34 +121,25 @@ function Navbar({ onMenuClick }) {
 
   const handleLogout = () => {
     Swal.fire({
-      title: 'Are you sure?',
-      text: "Do you want to logout?",
-      icon: 'warning',
+      title: 'Logout?',
+      text: 'Are you sure you want to logout?',
+      icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#3b82f6',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Yes, logout!',
-      cancelButtonText: 'Cancel',
-      background: isDarkMode ? '#1e3a8a' : '#ffffff',
-      color: isDarkMode ? '#e0f2fe' : '#1e293b',
-      customClass: {
-        popup: isDarkMode ? 'dark-mode-popup' : '',
-        title: isDarkMode ? 'text-blue-100' : 'text-blue-900',
-        htmlContainer: isDarkMode ? 'text-blue-200' : 'text-blue-800'
-      }
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, logout',
+      background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+      color: '#ffffff'
     }).then(async (result) => {
       if (result.isConfirmed) {
         setIsProfileOpen(false)
         
-        // Optional: Call logout API if endpoint exists
         try {
           await userAPI.logout();
         } catch (error) {
           console.error('Logout API error:', error);
-          // Continue with local logout even if API fails
         }
         
-        // Clear all localStorage items
         localStorage.removeItem('token')
         localStorage.removeItem('userId')
         localStorage.removeItem('userRole')
@@ -156,12 +155,8 @@ function Navbar({ onMenuClick }) {
           icon: 'success',
           timer: 1500,
           showConfirmButton: false,
-          background: isDarkMode ? '#1e3a8a' : '#ffffff',
-          color: isDarkMode ? '#e0f2fe' : '#1e293b',
-          customClass: {
-            popup: isDarkMode ? 'dark-mode-popup' : '',
-            title: isDarkMode ? 'text-blue-100' : 'text-blue-900'
-          }
+          background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+          color: '#ffffff'
         }).then(() => {
           navigate('/')
         })
@@ -169,7 +164,6 @@ function Navbar({ onMenuClick }) {
     })
   }
 
-  // Handle profile navigation based on user type
   const handleProfileClick = () => {
     setIsProfileOpen(false)
     if (userInfo.userType === 'student') {
@@ -177,22 +171,56 @@ function Navbar({ onMenuClick }) {
     } else if (userInfo.userType === 'lecturer') {
       navigate('/lecturerprofile')
     } else if (userInfo.userType === 'admin') {
-      navigate('/profile') // Default profile page for admin
+      navigate('/profile')
     } else {
-      navigate('/profile') // Fallback
+      navigate('/profile')
     }
   }
 
-  // Handle settings navigation
   const handleSettingsClick = () => {
     setIsProfileOpen(false)
     navigate('/settings')
   }
 
-  // Handle help & support navigation
   const handleHelpClick = () => {
     setIsProfileOpen(false)
     navigate('/contactus')
+  }
+
+  // Reusable avatar component
+  const Avatar = ({ size = 'sm' }) => {
+    const dimension = size === 'sm' ? 'w-8 h-8 sm:w-9 sm:h-9' : 'w-10 h-10'
+    const textSize = size === 'sm' ? 'text-xs' : 'text-sm'
+
+    if (loading) {
+      return (
+        <div className={`${dimension} rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse`}>
+          <User className="w-4 h-4 text-blue-400" />
+        </div>
+      )
+    }
+
+    if (profileImageSrc) {
+      return (
+        <img
+          src={profileImageSrc}
+          alt={userInfo.name}
+          className={`${dimension} rounded-full object-cover ring-2 ring-blue-400/40`}
+          onError={(e) => {
+            e.target.onerror = null
+            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo.name)}&background=3b82f6&color=fff&size=80`
+          }}
+        />
+      )
+    }
+
+    return (
+      <div className={`${dimension} rounded-full bg-blue-500 flex items-center justify-center`}>
+        <span className={`text-white font-bold ${textSize}`}>
+          {userInfo.name?.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    )
   }
 
   return (
@@ -206,7 +234,7 @@ function Navbar({ onMenuClick }) {
         ${showMobileSearch ? 'flex-row-reverse' : ''}
       `}
     >
-      {/* Mobile Menu Button - Hide when search is active */}
+      {/* Mobile Menu Button */}
       {!showMobileSearch && (
         <button
           onClick={onMenuClick}
@@ -232,10 +260,7 @@ function Navbar({ onMenuClick }) {
           }
           rounded-lg transition-all
         `}>
-          <Search className={`
-            absolute left-3 w-5 h-5
-            ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}
-          `} />
+          <Search className={`absolute left-3 w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} />
           <input
             ref={searchRef}
             type="text"
@@ -249,23 +274,18 @@ function Navbar({ onMenuClick }) {
                 : 'bg-blue-100 text-blue-900 placeholder-blue-400'
               }
               border ${isDarkMode ? 'dark:border-blue-800' : 'border-blue-300'}
-              focus:outline-none
-              transition-all
-              text-sm sm:text-base
+              focus:outline-none transition-all text-sm sm:text-base
             `}
           />
           {showMobileSearch && (
-            <button
-              onClick={() => setShowMobileSearch(false)}
-              className="md:hidden absolute right-3 p-1"
-            >
+            <button onClick={() => setShowMobileSearch(false)} className="md:hidden absolute right-3 p-1">
               <X className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-blue-500'}`} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Right Section - Notifications & Profile - Hide when mobile search is active */}
+      {/* Right Section */}
       {!showMobileSearch && (
         <div className="flex items-center gap-3">
           {/* Mobile Search Toggle */}
@@ -287,19 +307,16 @@ function Navbar({ onMenuClick }) {
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className={`
-                flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-lg
-                transition-all
+                flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-lg transition-all
                 ${isDarkMode 
                   ? 'dark:hover:bg-blue-800 dark:text-blue-100' 
                   : 'hover:bg-blue-100 text-blue-900'
                 }
               `}
             >
-              {/* Profile Icon with Blue Transparent Background */}
+              {/* Profile Avatar */}
               <div className="relative">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                </div>
+                <Avatar size="sm" />
                 <span className="absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
               </div>
               
@@ -322,17 +339,23 @@ function Navbar({ onMenuClick }) {
                   overflow-hidden z-50
                 `}
               >
-                {/* User Info */}
+                {/* User Info with avatar */}
                 <div className={`px-4 py-3 border-b ${isDarkMode ? 'dark:border-blue-800' : 'border-blue-200'}`}>
-                  <p className={`text-sm font-medium ${isDarkMode ? 'dark:text-blue-100' : 'text-blue-900'}`}>
-                    {loading ? 'Loading...' : userInfo.name}
-                  </p>
-                  <p className={`text-xs ${isDarkMode ? 'dark:text-blue-400' : 'text-blue-700'}`}>
-                    {loading ? 'Loading...' : userInfo.email}
-                  </p>
-                  <p className={`text-xs mt-1 ${isDarkMode ? 'dark:text-blue-300' : 'text-blue-600'}`}>
-                    Role: {loading ? 'Loading...' : userInfo.displayRole}
-                  </p>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Avatar size="lg" />
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold truncate ${isDarkMode ? 'dark:text-blue-100' : 'text-blue-900'}`}>
+                        {loading ? 'Loading...' : userInfo.name}
+                      </p>
+                      <p className={`text-xs truncate ${isDarkMode ? 'dark:text-blue-400' : 'text-blue-700'}`}>
+                        {loading ? 'Loading...' : userInfo.email}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium
+                    ${isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-700'}`}>
+                    {loading ? '...' : userInfo.displayRole}
+                  </span>
                 </div>
 
                 {/* Menu Items */}
@@ -340,8 +363,7 @@ function Navbar({ onMenuClick }) {
                   <button
                     onClick={handleProfileClick}
                     className={`
-                      w-full flex items-center gap-3 px-4 py-2.5
-                      transition-all
+                      w-full flex items-center gap-3 px-4 py-2.5 transition-all
                       ${isDarkMode 
                         ? 'dark:hover:bg-blue-800 dark:text-blue-200' 
                         : 'hover:bg-blue-100 text-blue-800'
@@ -355,8 +377,7 @@ function Navbar({ onMenuClick }) {
                   <button
                     onClick={handleSettingsClick}
                     className={`
-                      w-full flex items-center gap-3 px-4 py-2.5
-                      transition-all
+                      w-full flex items-center gap-3 px-4 py-2.5 transition-all
                       ${isDarkMode 
                         ? 'dark:hover:bg-blue-800 dark:text-blue-200' 
                         : 'hover:bg-blue-100 text-blue-800'
@@ -370,8 +391,7 @@ function Navbar({ onMenuClick }) {
                   <button
                     onClick={handleHelpClick}
                     className={`
-                      w-full flex items-center gap-3 px-4 py-2.5
-                      transition-all
+                      w-full flex items-center gap-3 px-4 py-2.5 transition-all
                       ${isDarkMode 
                         ? 'dark:hover:bg-blue-800 dark:text-blue-200' 
                         : 'hover:bg-blue-100 text-blue-800'
@@ -388,8 +408,7 @@ function Navbar({ onMenuClick }) {
                   <button
                     onClick={handleLogout}
                     className={`
-                      w-full flex items-center gap-3 px-4 py-2.5
-                      transition-all
+                      w-full flex items-center gap-3 px-4 py-2.5 transition-all
                       ${isDarkMode 
                         ? 'dark:hover:bg-red-900/20 dark:text-red-400' 
                         : 'hover:bg-red-100 text-red-600'
